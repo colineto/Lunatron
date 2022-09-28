@@ -1,3 +1,9 @@
+# Indigo
+
+Indigo is a game engine for functional programmers. It's powered by Scala.js and builds with sbt & Mill.
+
+It's easy to type and easy to test and allows you to make pixel-art 2D games.
+
 # Snake made by Dave
 
 Dave is the creator of Indigo and one of it’s best contributor 😄
@@ -10,7 +16,7 @@ He made some examples of games, like the one you can see in the video : “the c
 
 But my favourite is Snake 🐍  I’ve always loved that game and played with it a lot on my foldable phone when I was younger !
 
-Here you can find a zipped *sbt* version of it.
+This is an updated *sbt* version of it
 
 You can test it and play with it using
 
@@ -29,11 +35,9 @@ Check [`http://127.0.0.1:8080/`](http://127.0.0.1:8080/)
 
 ![](game-screen.png)
 
-Try and play with it !
-
 # Tron upgrade
 
-We want to use that Snake as a basis to build our own home made two players TRON game 🪢
+We want to use that Snake as a basis to build our own home-made two players TRON game 🪢
 
 We will basically duplicate snake, add another keys control, improve collision, update score calculation and add some colours 😅
 
@@ -41,7 +45,9 @@ This will allow us to go through the architecture of the code 🧅  and discove
 
 ## Tron game and rules
 
-There’s multiple versions of the TRON game, some with players launching some sort of rings other with bikes and finally some with snakes. The common point is that in any case the moving element will create a line/track behind it.
+There’s multiple versions of the TRON game, some with players launching some sort of rings other with bikes and finally some with snakes. 
+
+The common point is that in any case the moving element will create a line/track behind it that the other player must avoid.
 
 Our game will consist of two snakes evolving in a closed environment, the line will then be the snake itself.
 
@@ -49,13 +55,13 @@ It’s a two player game, each controlling one of the snakes, one with the arrow
 
 The rules that applies to a snake will still apply :
 
-- if it cross a wall it dies
-- if it cross itself it dies
-- if it eat an apple it grows
+- if it crosses a wall it dies
+- if it crosses itself it dies
+- if it eats an apple it grows
 
 The rule we will add to make it a **Tron** is :
 
-- if it cross the other snake it dies
+- if it crosses the other snake it dies
 
 So the goal in order to win will be to cut the way to the other snake in order to force him to cross us or eventually to go into a wall or itself.
 
