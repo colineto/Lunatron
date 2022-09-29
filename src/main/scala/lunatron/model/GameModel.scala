@@ -11,13 +11,13 @@ import lunatron.model.snakemodel.{CollisionCheckOutcome, Snake}
 import lunatron.scenes.{GameOverScene, GameView}
 import lunatron.Score
 import indigo.scenes.SceneEvent
-import lunatron.model.tronmodel.{CollisionCheckResult, Tron}
+import lunatron.model.tronmodel.{CollisionCheckResult, Scores, Tron}
 
 final case class GameModel(
     tron: Tron,
     gameState: GameState,
     gameMap: GameMap,
-    score: Int,
+    scores: Scores,
     tickDelay: Seconds,
     lastUpdated: Seconds
 ) {
@@ -69,7 +69,7 @@ object GameModel {
       ),
       gameState = GameState.Running.start,
       gameMap = GameMap.genLevel(gridSize),
-      score = 0,
+      scores = Scores(0, 0),
       tickDelay = Seconds(0.1),
       lastUpdated = Seconds.zero
     )
@@ -187,7 +187,7 @@ object GameModel {
                   gameModel.gameMap.findEmptySpace(dice, collision.gridPoint :: gameModel.tron.snake.givePath)
                 )
               ),
-            score = gameModel.score + ScoreIncrement
+            scores = gameModel.scores.copy(snake = gameModel.scores.snake + ScoreIncrement)
           )
         ).addGlobalEvents(
           PlaySound(GameAssets.soundPoint, Volume.Max),
@@ -205,7 +205,7 @@ object GameModel {
                   gameModel.gameMap.findEmptySpace(dice, collision.gridPoint :: gameModel.tron.ekans.givePath)
                 )
               ),
-            score = gameModel.score + ScoreIncrement
+            scores = gameModel.scores.copy(ekans = gameModel.scores.ekans + ScoreIncrement)
           )
         ).addGlobalEvents(
           PlaySound(GameAssets.soundPoint, Volume.Max),

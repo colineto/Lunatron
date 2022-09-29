@@ -2,10 +2,12 @@ package lunatron.scenes
 
 import indigo.shared.scenegraph.{Graphic, Group, Layer, SceneNode, SceneUpdateFragment, Text}
 import indigo.shared.Outcome
-import indigo.shared.datatypes.{BindingKey, Point}
+import indigo.shared.datatypes.{BindingKey, Point, RGBA}
 import indigoextras.geometry.{BoundingBox, Vertex}
 import lunatron.init.{GameAssets, StaticAssets, ViewConfig}
 import lunatron.model.{GameMap, GameModel}
+import lunatron.model.tronmodel.Scores
+import org.w3c.dom.css.RGBColor
 
 object GameView {
 
@@ -39,7 +41,7 @@ object GameView {
       drawApple(viewConfig, currentState.gameMap, staticAssets) ++
       drawSnake(viewConfig, currentState, staticAssets.snake) ++
       drawEkans(viewConfig, currentState, staticAssets.ekans) ++
-      drawScore(viewConfig, currentState.score)
+      drawScores(viewConfig, currentState.scores)
 
   def drawApple(viewConfig: ViewConfig, gameMap: GameMap, staticAssets: StaticAssets): List[Graphic[_]] =
     gameMap.findApples.map { a =>
@@ -56,15 +58,23 @@ object GameView {
       ekansAsset.moveTo(gridPointToPoint(pt, currentState.gameMap.gridSize, viewConfig.gridSquareSize))
     }
 
-  def drawScore(viewConfig: ViewConfig, score: Int): List[SceneNode] =
+  def drawScores(viewConfig: ViewConfig, scores: Scores): List[SceneNode] =
     List(
       Text(
-        score.toString,
+        scores.snake.toString,
         (viewConfig.viewport.width / viewConfig.magnificationLevel) - 3,
         (viewConfig.viewport.height / viewConfig.magnificationLevel) - viewConfig.footerHeight + 21,
         1,
         GameAssets.fontKey,
-        GameAssets.fontMaterial
+        GameAssets.fontMaterial.withTint(RGBA.Blue)
+      ).alignRight,
+      Text(
+        scores.ekans.toString,
+        13,
+        (viewConfig.viewport.height / viewConfig.magnificationLevel) - viewConfig.footerHeight + 21,
+        1,
+        GameAssets.fontKey,
+        GameAssets.fontMaterial.withTint(RGBA.Red)
       ).alignRight
     )
 
