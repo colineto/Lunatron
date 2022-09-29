@@ -38,7 +38,7 @@ object GameView {
     walls ::
       drawApple(viewConfig, currentState.gameMap, staticAssets) ++
       drawSnake(viewConfig, currentState, staticAssets.snake) ++
-      drawEkans(viewConfig, currentState, staticAssets.snake) ++
+      drawEkans(viewConfig, currentState, staticAssets.ekans) ++
       drawScore(viewConfig, currentState.score)
 
   def drawApple(viewConfig: ViewConfig, gameMap: GameMap, staticAssets: StaticAssets): List[Graphic[_]] =

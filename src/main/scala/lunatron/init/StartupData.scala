@@ -9,7 +9,7 @@ import indigoextras.geometry.BoundingBox
 object StartupData {
 
   def initialise(
-    viewConfig: ViewConfig
+      viewConfig: ViewConfig
   ): Outcome[Startup[StartupData]] =
     Outcome(
       Startup.Success(createStartupData(viewConfig))
@@ -23,6 +23,7 @@ object StartupData {
       staticAssets = StaticAssets(
         apple = GameAssets.apple(blockSize),
         snake = GameAssets.snake(blockSize),
+        ekans = GameAssets.ekans(blockSize),
         wall = GameAssets.wall(blockSize)
       )
     )
@@ -32,17 +33,22 @@ object StartupData {
 
 final case class StartupData(viewConfig: ViewConfig, staticAssets: StaticAssets)
 
-final case class StaticAssets(apple: Graphic[Material.Bitmap], snake: Graphic[Material.Bitmap], wall: Graphic[Material.Bitmap])
+final case class StaticAssets(
+    apple: Graphic[Material.ImageEffects],
+    snake: Graphic[Material.ImageEffects],
+    ekans: Graphic[Material.ImageEffects],
+    wall: Graphic[Material.ImageEffects]
+)
 
 final case class ViewConfig(
-  gridSize: BoundingBox,
-  gridSquareSize: Int,
-  footerHeight: Int,
-  magnificationLevel: Int,
-  viewport: GameViewport
+    gridSize: BoundingBox,
+    gridSquareSize: Int,
+    footerHeight: Int,
+    magnificationLevel: Int,
+    viewport: GameViewport
 ) {
   val horizontalCenter: Int = (viewport.width / magnificationLevel) / 2
-  val verticalMiddle: Int   = (viewport.height / magnificationLevel) / 2
+  val verticalMiddle: Int = (viewport.height / magnificationLevel) / 2
 }
 object ViewConfig {
 
@@ -55,7 +61,7 @@ object ViewConfig {
       height = 20
     )
     val magnificationLevel = 2
-    val footerHeight       = 36
+    val footerHeight = 36
 
     ViewConfig(
       gridSize,

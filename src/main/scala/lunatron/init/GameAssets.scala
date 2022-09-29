@@ -1,30 +1,31 @@
 package lunatron.init
 
 import indigo.shared.assets.{AssetName, AssetPath, AssetType}
-import indigo.shared.datatypes.{FontInfo, FontKey, FontChar}
+import indigo.shared.datatypes.{FontChar, FontInfo, FontKey, RGBA}
 import indigo.shared.materials.Material
 import indigo.shared.scenegraph.Graphic
 
 object GameAssets {
 
   val smallFontName: AssetName = AssetName("smallFontName")
-  val snakeTexture: AssetName  = AssetName("snakeTexture")
-  val soundIntro: AssetName    = AssetName("introSound")
-  val soundPoint: AssetName    = AssetName("pointSound")
-  val soundLose: AssetName     = AssetName("loseSound")
+  val snakeTexture: AssetName = AssetName("snakeTexture")
+  val soundIntro: AssetName = AssetName("introSound")
+  val soundPoint: AssetName = AssetName("pointSound")
+  val soundLose: AssetName = AssetName("loseSound")
 
-  val snakeMaterial: Material.Bitmap = Material.Bitmap(snakeTexture)
+  val snakeMaterial: Material.ImageEffects = Material.ImageEffects(snakeTexture)
 
-  def apple(blockSize: Int): Graphic[Material.Bitmap] =
-    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial)
-      .withCrop(blockSize, 0, blockSize, blockSize)
+  def apple(blockSize: Int): Graphic[Material.ImageEffects] =
+    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial).withCrop(blockSize, 0, blockSize, blockSize)
 
-  def snake(blockSize: Int): Graphic[Material.Bitmap] =
-    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial)
+  def snake(blockSize: Int): Graphic[Material.ImageEffects] =
+    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial.withTint(RGBA.Blue))
 
-  def wall(blockSize: Int): Graphic[Material.Bitmap] =
-    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial)
-      .withCrop(blockSize * 2, 0, blockSize, blockSize)
+  def ekans(blockSize: Int): Graphic[Material.ImageEffects] =
+    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial.withTint(RGBA.Red))
+
+  def wall(blockSize: Int): Graphic[Material.ImageEffects] =
+    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial).withCrop(blockSize * 2, 0, blockSize, blockSize)
 
   def assets(baseUrl: String): Set[AssetType] =
     Set(
