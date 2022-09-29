@@ -85,8 +85,8 @@ object GameModel {
       val (updatedModel, collisionResult) =
         state.tron.update(
           state.gameMap.gridSize,
-          hitTest(state.gameMap, state.tron.snake.givePath),
-          hitTest(state.gameMap, state.tron.ekans.givePath)
+          hitTest(state.gameMap, state.tron.snake.givePath, state.tron.ekans.givePath),
+          hitTest(state.gameMap, state.tron.ekans.givePath, state.tron.snake.givePath)
         ) match {
           case (t, outcome) =>
             (
@@ -113,10 +113,11 @@ object GameModel {
       Outcome(state)
   }
 
-  def hitTest(gameMap: GameMap, body: List[Vertex]): Vertex => CollisionCheckOutcome =
+  def hitTest(gameMap: GameMap, body: List[Vertex], otherBody: List[Vertex]): Vertex => CollisionCheckOutcome =
     given CanEqual[Option[MapElement], Option[MapElement]] = CanEqual.derived
     pt =>
       if (body.contains(pt)) CollisionCheckOutcome.Crashed(pt)
+      else if (otherBody.contains(pt)) CollisionCheckOutcome.Crashed(pt)
       else
         gameMap.fetchElementAt(pt) match {
           case Some(MapElement.Apple(_)) =>
