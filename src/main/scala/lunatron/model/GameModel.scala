@@ -19,7 +19,6 @@ final case class GameModel(
     gameMap: GameMap,
     score: Int,
     tickDelay: Seconds,
-    controlScheme: ControlScheme,
     lastUpdated: Seconds
 ) {
 
@@ -62,7 +61,7 @@ object GameModel {
 
   val ScoreIncrement: Int = 100
 
-  def initialModel(gridSize: BoundingBox, controlScheme: ControlScheme): GameModel =
+  def initialModel(gridSize: BoundingBox): GameModel =
     GameModel(
       tron = Tron(
         gridSize.center.x.toInt,
@@ -72,7 +71,6 @@ object GameModel {
       gameMap = GameMap.genLevel(gridSize),
       score = 0,
       tickDelay = Seconds(0.1),
-      controlScheme = controlScheme,
       lastUpdated = Seconds.zero
     )
 
@@ -108,12 +106,7 @@ object GameModel {
 
     case e: KeyboardEvent =>
       Outcome(
-        state.copy(
-          tron = Tron(
-            state.controlScheme.instructSnake(e, state.tron.snake, runningDetails.lastSnakeDirection),
-            state.controlScheme.instructSnake(e, state.tron.ekans, runningDetails.lastEkansDirection)
-          )
-        )
+        state.copy(tron = Tron(state.tron.snake.instruct(e), state.tron.ekans.instruct(e)))
       )
 
     case _ =>

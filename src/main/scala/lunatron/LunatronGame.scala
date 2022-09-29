@@ -53,7 +53,7 @@ object LunatronGame extends IndigoGame[ViewConfig, StartupData, GameModel, ViewM
     }
 
   def initialModel(startupData: StartupData): Outcome[GameModel] =
-    Outcome(GameModel.initialModel(startupData.viewConfig.gridSize, ControlScheme.directedKeys))
+    Outcome(GameModel.initialModel(startupData.viewConfig.gridSize))
 
   def initialViewModel(startupData: StartupData, model: GameModel): Outcome[ViewModel] =
     Outcome(ViewModel.initialViewModel(startupData, model))
@@ -63,7 +63,7 @@ object LunatronGame extends IndigoGame[ViewConfig, StartupData, GameModel, ViewM
 
   def updateModel(context: FrameContext[StartupData], model: GameModel): GlobalEvent => Outcome[GameModel] = {
     case GameReset =>
-      Outcome(GameModel.initialModel(context.startUpData.viewConfig.gridSize, model.controlScheme))
+      Outcome(GameModel.initialModel(context.startUpData.viewConfig.gridSize))
 
     case _ =>
       Outcome(model)

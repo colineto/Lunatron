@@ -13,95 +13,95 @@ import indigo.Seconds
 import indigo.shared.collections.Batch
 
 object ControlsScene extends Scene[StartupData, GameModel, ViewModel] {
-  type SceneModel = ControlScheme
+  type SceneModel = Unit
   type SceneViewModel = Unit
 
   val name: SceneName =
     SceneName("controls")
 
-  val modelLens: Lens[GameModel, ControlScheme] =
-    Lens(_.controlScheme, (m, c) => m.copy(controlScheme = c))
+  val modelLens: Lens[GameModel, SceneModel] =
+    Lens.unit
 
-  val viewModelLens: Lens[ViewModel, Unit] =
+  val viewModelLens: Lens[ViewModel, SceneViewModel] =
     Lens.unit
 
   val eventFilters: EventFilters =
-    EventFilters.Restricted
-                .withViewModelFilter(_ => None)
+    EventFilters.Restricted.withViewModelFilter(_ => None)
 
   val subSystems: Set[SubSystem] =
     Set()
 
   def updateModel(
-    context: FrameContext[StartupData],
-    controlScheme: ControlScheme
-  ): GlobalEvent => Outcome[ControlScheme] = {
+      context: FrameContext[StartupData],
+      sceneModel: SceneModel
+  ): GlobalEvent => Outcome[SceneModel] = {
     case KeyboardEvent.KeyUp(Key.SPACE) =>
-      Outcome(controlScheme)
-        .addGlobalEvents(SceneEvent.JumpTo(GameScene.name))
-
-    case KeyboardEvent.KeyUp(Key.UP_ARROW) | KeyboardEvent.KeyUp(Key.DOWN_ARROW) =>
-      Outcome(controlScheme.swap)
-
+      Outcome(sceneModel).addGlobalEvents(SceneEvent.JumpTo(GameScene.name))
     case _ =>
-      Outcome(controlScheme)
+      Outcome(sceneModel)
   }
 
   def updateViewModel(
-    context: FrameContext[StartupData],
-    controlScheme: ControlScheme,
-    sceneViewModel: Unit
-  ): GlobalEvent => Outcome[Unit] =
+      context: FrameContext[StartupData],
+      sceneModel: SceneModel,
+      sceneViewModel: SceneViewModel
+  ): GlobalEvent => Outcome[SceneViewModel] =
     _ => Outcome(sceneViewModel)
 
   def present(
-    context: FrameContext[StartupData],
-    sceneModel: ControlScheme,
-    sceneViewModel: Unit
+      context: FrameContext[StartupData],
+      sceneModel: SceneModel,
+      sceneViewModel: SceneViewModel
   ): Outcome[SceneUpdateFragment] =
     Outcome {
       val horizontalCenter: Int = context.startUpData.viewConfig.horizontalCenter
       val verticalMiddle: Int = context.startUpData.viewConfig.verticalMiddle
 
-      SceneUpdateFragment.empty
-                         .addLayer(
-                           Layer(
-                             BindingKey("ui"),
-                             Batch.fromList(drawControlsText(24, verticalMiddle, sceneModel) ++
-                               List(drawSelectText(horizontalCenter)) ++
-                               SharedElements.drawHitSpaceToStart(horizontalCenter, Seconds(1), context.gameTime)
-                             )
-                           )
-                         )
+      SceneUpdateFragment.empty.addLayer(
+        Layer(
+          BindingKey("ui"),
+          Batch.fromList(
+            drawControlsText(24, verticalMiddle) ++
+              SharedElements.drawHitSpaceToStart(horizontalCenter, Seconds(1), context.gameTime)
+          )
+        )
+      )
     }
 
-  def drawControlsText(center: Int, middle: Int, controlScheme: ControlScheme): List[SceneNode] =
+  def drawControlsText(center: Int, middle: Int): List[SceneNode] =
     List(
-      Text("select controls", center, middle - 20, 1, GameAssets.fontKey, GameAssets.fontMaterial).alignLeft
-    ) ++ {
-      controlScheme match {
-        case ControlScheme.Turning(_, _) =>
-          List(
-            Text(
-              "[_] direction (all arrow keys)", center, middle - 5, 1, GameAssets.fontKey, GameAssets.fontMaterial
-            ).alignLeft,
-            Text(
-              "[x] turn (left and right arrows)", center, middle + 10, 1, GameAssets.fontKey, GameAssets.fontMaterial
-            ).alignLeft
-          )
-
-        case ControlScheme.Directed(_, _, _, _) =>
-          List(
-            Text(
-              "[x] direction (all arrow keys)", center, middle - 5, 1, GameAssets.fontKey, GameAssets.fontMaterial
-            ).alignLeft,
-            Text(
-              "[_] turn (left and right arrows)", center, middle + 10, 1, GameAssets.fontKey, GameAssets.fontMaterial
-            ).alignLeft
-          )
-      }
-    }
-
-  def drawSelectText(center: Int): SceneNode =
-    Text("Up / Down arrows to select.", center, 205, 1, GameAssets.fontKey, GameAssets.fontMaterial).alignCenter
+      Text("Tron controls:", center, middle - 60, 1, GameAssets.fontKey, GameAssets.fontMaterial).alignLeft,
+      Text(
+        "Snake, in Red",
+        center,
+        middle - 30,
+        1,
+        GameAssets.fontKey,
+        GameAssets.fontMaterial
+      ).alignLeft,
+      Text(
+        "is controlled with all arrow keys",
+        center,
+        middle - 20,
+        1,
+        GameAssets.fontKey,
+        GameAssets.fontMaterial
+      ).alignLeft,
+      Text(
+        "Ekans, in Blue",
+        center,
+        middle + 10,
+        1,
+        GameAssets.fontKey,
+        GameAssets.fontMaterial
+      ).alignLeft,
+      Text(
+        "is ontrolled with WASD keys",
+        center,
+        middle + 20,
+        1,
+        GameAssets.fontKey,
+        GameAssets.fontMaterial
+      ).alignLeft
+    )
 }

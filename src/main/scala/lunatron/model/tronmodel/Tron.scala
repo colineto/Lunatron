@@ -2,6 +2,7 @@ package lunatron.model.tronmodel
 
 import indigoextras.geometry.{BoundingBox, Vertex}
 import lunatron.model.snakemodel.{CollisionCheckOutcome, Snake, SnakeDirection, SnakeStatus}
+import lunatron.model.ControlScheme
 
 final case class Tron(snake: Snake, ekans: Snake) {
   def update(
@@ -23,14 +24,26 @@ final case class Tron(snake: Snake, ekans: Snake) {
 object Tron {
   def apply(start: Vertex): Tron =
     Tron(
-      Snake(start, Nil, SnakeDirection.Up, SnakeStatus.Alive),
-      Snake(start, Nil, SnakeDirection.Down, SnakeStatus.Alive)
+      Snake(start, Nil, SnakeDirection.Up, SnakeStatus.Alive, ControlScheme.directedKeys),
+      Snake(start, Nil, SnakeDirection.Down, SnakeStatus.Alive, ControlScheme.wasdDirectedKeys)
     )
 
   def apply(x: Int, y: Int): Tron =
     Tron(
-      Snake(Vertex(x.toDouble, y.toDouble), Nil, SnakeDirection.Up, SnakeStatus.Alive),
-      Snake(Vertex(x.toDouble, y.toDouble), Nil, SnakeDirection.Down, SnakeStatus.Alive)
+      Snake(
+        Vertex(x.toDouble, y.toDouble),
+        Nil,
+        SnakeDirection.Up,
+        SnakeStatus.Alive,
+        ControlScheme.directedKeys
+      ),
+      Snake(
+        Vertex(x.toDouble, y.toDouble),
+        Nil,
+        SnakeDirection.Down,
+        SnakeStatus.Alive,
+        ControlScheme.wasdDirectedKeys
+      )
     )
 
   def update(
