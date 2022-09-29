@@ -11,13 +11,13 @@ final case class Tron(snake: Snake, ekans: Snake) {
   ): (Tron, CollisionCheckResult) =
     Tron.update(this, gridSize, snakeCollisionCheck, ekansCollisionCheck)
 
-  val growSnake = Tron.growSnake(this)
+  def growSnake = Tron.growSnake(this)
 
-  val growEkans = Tron.growEkans(this)
+  def growEkans = Tron.growEkans(this)
 
-  val shrinkSnake = Tron.shrinkSnake(this)
+  def shrinkSnake = Tron.shrinkSnake(this)
 
-  val shrinkEkans = Tron.shrinkEkans(this)
+  def shrinkEkans = Tron.shrinkEkans(this)
 }
 
 object Tron {

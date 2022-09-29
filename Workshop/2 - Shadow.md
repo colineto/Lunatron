@@ -335,9 +335,9 @@ Now we have to update **Snake** usages in `GameModel` one by one, replace them b
     def growEkans(tron: Tron) = tron.copy(ekans = tron.ekans.grow)
     
     // in the class
-    val growSnake = Tron.growSnake(this)
+    def growSnake = Tron.growSnake(this)
     
-    val growEkans = Tron.growEkans(this)
+    def growEkans = Tron.growEkans(this)
     ```
 
   Use it in previously updated code
@@ -376,9 +376,9 @@ Now we have to update **Snake** usages in `GameModel` one by one, replace them b
     def shrinkEkans(tron: Tron) = tron.copy(ekans = tron.ekans.shrink)
     
     // in the class
-    val shrinkSnake = Tron.shrinkSnake(this)
+    def shrinkSnake = Tron.shrinkSnake(this)
     
-    val shrinkEkans = Tron.shrinkEkans(this)
+    def shrinkEkans = Tron.shrinkEkans(this)
     ```
 
   Then replace that case with two cases, one for Snake and one for Ekans
