@@ -1,18 +1,26 @@
 ## Ekans the shadow of Snake
 
-We want another instantiation of Snake that we will call Ekans.
+The game we want to build is a 2 player one with 2 snakes.
+
+For the second snake we will need another instantiation of Snake
+
+we will call it Ekans :)
 
 We want to keep both of them in a **Tron** case class so we can define common methods.
 
 ### 1. Tron model
 
-Create `tronmodel` and `Tron` class that contains Snake ****and ****Ekans ****
+Create an empty `tronmodel` directory just like `snakemodel` one, in `model` directory
+
+Create `Tron` case class that contains Snake and Ekans
 
 ```scala
 final case class Tron(snake: Snake, ekans: Snake)
 ```
 
-Add `Tron` object and define `apply` method like for Snake
+Add `Tron` object and define `apply` methods. 
+
+You can take a look at the `Snake` one because we will basically be instantiating 2 snakes in here.
 
 ```scala
 object Tron {
@@ -31,11 +39,22 @@ object Tron {
 }
 ```
 
+Add the necessary imports
+
+```scala
+import indigoextras.geometry.Vertex
+import lunatron.model.snakemodel.{Snake, SnakeDirection, SnakeStatus}
+```
+
 ### 2. Game model
 
-In the `GameModel` class one of the argument is Snake.
+As mentioned previously the `GameModel` class is where the magic happens.
 
-Replace that with the new **Tron** one.
+It defines how the game will be updated during time responding to different events and interactions.
+
+`Snake` is part of the `GameModel`, we could add `Ekans` here but this is the reason why we created `Tron`.  
+
+So replace `Snake` with the new `Tron` one.
 
 ```scala
 final case class GameModel(
@@ -49,11 +68,12 @@ final case class GameModel(
 )
 ```
 
-
-Now we will update **Tron** usages in `GameModel` one by one
+Now we have to update **Snake** usages in `GameModel` one by one, replace them by **Tron** and adapt the code.
 
 - `initialModel`
 
+  This function initialise the model so instead of an implementation of **snake** we want an implementation of **Tron** here by calling the `apply` function.
+  
     ```scala
     tron = Tron(
             gridSize.center.x.toInt,
@@ -61,13 +81,15 @@ Now we will update **Tron** usages in `GameModel` one by one
           ),
     ```
 
-    remove the `grow` apply for now
+    Don't forget to remove the `.grow.grow` as this will make snakes too large at start
 
 
 - `updateRunning` `case FrameTick`
+  
+  `updateRunning` will define what happen on `FrameTick` or `KeyboardEvent`
 
-    Replace with **Tron**
-
+  In case of `FrameTick` we want to update the model with all new information.
+  
     ```scala
     val (updatedModel, collisionResult) =
       state.tron.update(state.gameMap.gridSize, hitTest(state.gameMap, state.tron.givePath)) match {
@@ -79,26 +101,19 @@ Now we will update **Tron** usages in `GameModel` one by one
       }
     ```
 
-  `tron.givePath` and `tron.direction` don’t really make sense but we will update that in a moment.
+  Notice that `tron.givePath` and `tron.direction` don’t really make sense, but we will update that in a moment.
 
-  First, add to `Tron` the `update` method
+  We will create an `update` function for `Tron`.
 
-    ```scala
-    def update(
-          tron: Tron,
-          gridSize: BoundingBox,
-          snakeCollisionCheck: Vertex => CollisionCheckOutcome,
-          ekansCollisionCheck: Vertex => CollisionCheckOutcome
-      ): (Tron, CollisionCheckResult) = {
-        val s = tron.snake.update(gridSize, snakeCollisionCheck)
-        val e = tron.ekans.update(gridSize, ekansCollisionCheck)
-        (Tron(s._1, e._1), CollisionCheckResult.fromCollisionCheckOutcomes(s._2, e._2))
-      }
-    ```
-
-  We need to create `CollisionCheckResult` in `tronmodel` to handle Snake and Ekans`CollisionCheckOutcomes`
+  But first, if you take a look at the `Snake` `update` function you'll see that it returns a `CollisionCheckOutcome`
+  
+  This collision model can only apply to **one** Snake so we need another one that will take both into account.
+  
+  Create `CollisionCheckResult` in `tronmodel` to handle Snake and Ekans `CollisionCheckOutcomes`
 
     ```scala
+    import lunatron.model.snakemodel.CollisionCheckOutcome
+    
     sealed trait CollisionCheckResult {
       val result: CollisionCheckOutcome
     }
@@ -121,9 +136,31 @@ Now we will update **Tron** usages in `GameModel` one by one
     }
     ```
 
-  Then change `tron.update` call with both `hitTest` methods.
+  Now we need to add to `Tron` an `update` method that returns this `CollisionCheckResult`
 
-  For `updateNow` we will probably want to have both Snake and Ekans directions.
+    ```scala
+    // In the object :
+    def update(
+          tron: Tron,
+          gridSize: BoundingBox,
+          snakeCollisionCheck: Vertex => CollisionCheckOutcome,
+          ekansCollisionCheck: Vertex => CollisionCheckOutcome
+      ): (Tron, CollisionCheckResult) = {
+        val s = tron.snake.update(gridSize, snakeCollisionCheck)
+        val e = tron.ekans.update(gridSize, ekansCollisionCheck)
+        (Tron(s._1, e._1), CollisionCheckResult.fromCollisionCheckOutcomes(s._2, e._2))
+      }
+  
+  // In the case class :
+  def update(gridSize: BoundingBox,
+             snakeCollisionCheck: Vertex => CollisionCheckOutcome,
+             ekansCollisionCheck: Vertex => CollisionCheckOutcome): (Tron, CollisionCheckResult) =
+       Tron.update(this, gridSize, snakeCollisionCheck, ekansCollisionCheck)
+    ```
+
+  Then, back to `GameModel`, in `tron.update`, we want to call `hitTest` method on both snake and ekans.
+  
+  And when `tron.direction` is called in `updateNow` we actually want here both Snake and Ekans directions.
 
     ```scala
     val (updatedModel, collisionResult) =
@@ -152,8 +189,8 @@ Now we will update **Tron** usages in `GameModel` one by one
 
 - `updateRunning` `case e: KeyboardEvent`
 
-  Replace with **Tron**
-
+  In case of `KeyboardEvent` we want to apply related action. In this case it will consist in instructing snake and ekans to move in a certain direction.
+  
     ```scala
     case e: KeyboardEvent =>
           Outcome(
@@ -187,7 +224,7 @@ Now we will update **Tron** usages in `GameModel` one by one
 
 - `updateBasedOnCollision` `case CollisionCheckOutcome.Crashed(_)`
 
-  That `Crashed` case only works for Snake game. We want to be able to know if Snake or Ekans Crashed.
+  That `Crashed` case only works for Snake game. We want to be able to know if Snake **or** Ekans Crashed.
 
   Let’s match on `CollisionCheckResult` cases starting with `SnakeCrashed`
 
@@ -196,10 +233,10 @@ Now we will update **Tron** usages in `GameModel` one by one
             Outcome(
               gameModel.copy(
                 gameState = gameModel.gameState match {
-                  case c @ GameState.Crashed(_, _, _, _, _) =>
+                  case c @ GameState.Crashed(_, _, _, _) =>
                     c
     
-                  case r @ GameState.Running(_, _, _) =>
+                  case r @ GameState.Running(_, _) =>
                     r.crash(gameTime.running, gameModel.tron.snake.length)
                 },
                 tickDelay = gameModel.tron.snake.length match {
@@ -212,16 +249,6 @@ Now we will update **Tron** usages in `GameModel` one by one
             ).addGlobalEvents(PlaySound(GameAssets.soundLose, Volume.Max))
     ```
 
-  Don’t forget to add the valid number of arguments in `Crashed` and `Running` cases
-
-    ```scala
-    case c @ GameState.Crashed(_, _, _, _, _) =>
-    /***/
-    case r @ GameState.Running(_, _, _) =>
-    ```
-
-  /!\ This also need to be done in `update` function /!\
-
   Now we can do the same for `EkansCrashed` case
 
     ```scala
@@ -229,10 +256,10 @@ Now we will update **Tron** usages in `GameModel` one by one
             Outcome(
               gameModel.copy(
                 gameState = gameModel.gameState match {
-                  case c @ GameState.Crashed(_, _, _, _, _) =>
+                  case c @ GameState.Crashed(_, _, _, _) =>
                     c
     
-                  case r @ GameState.Running(_, _, _) =>
+                  case r @ GameState.Running(_, _) =>
                     r.crash(gameTime.running, gameModel.tron.ekans.length)
                 },
                 tickDelay = gameModel.tron.ekans.length match {
@@ -247,7 +274,7 @@ Now we will update **Tron** usages in `GameModel` one by one
 
 - `updateBasedOnCollision` `CollisionCheckOutcome.PickUp(pt)`
 
-  Same than above we want to know if Snake or Ekans picked up
+  Same than above we want to know if Snake **or** Ekans picked up
 
   Change that case to `SnakePickUp`
 
@@ -354,7 +381,7 @@ Now we will update **Tron** usages in `GameModel` one by one
     val shrinkEkans = Tron.shrinkEkans(this)
     ```
 
-  Then create the two cases
+  Then replace that case with two cases, one for Snake and one for Ekans
 
     ```scala
     case FrameTick if state.tron.snake.length > 1 =>
@@ -389,9 +416,9 @@ Now we will update **Tron** usages in `GameModel` one by one
     ```
 ### 3. Game state
 
-During the modification of `GameModel` we noticed that `GameState` will also need adjustments
+During the modification of `GameModel` we noticed that `GameState` also needed adjustments
 
-First, int the base trait, let’s add info about last and current direction for both Snake and Ekans.
+First, in the base trait, let’s add info about last and current direction for both Snake and Ekans.
 
 ```scala
 sealed trait GameState {
@@ -402,7 +429,7 @@ sealed trait GameState {
 }
 ```
 
-Now let’s update implementations
+Now let’s update implementations just like we did before.
 
 - case class `Crashed`
 
@@ -450,6 +477,14 @@ Now let’s update implementations
         val start: Running = GameState.Running(Seconds.zero, SnakeDirection.Up, SnakeDirection.Down)
       }
     ```
+  
+Finally, let's go back to `GameModel` to update the usages of what we just modified.
+
+Update all `GameState.Running(_, _)` with `GameState.Running(_, _, _)`
+
+and all `GameState.Crashed(_, _, _, _)` with `GameState.Crashed(_, _, _, _, _)`
+
+---
 
 At that point it seems that we have modified everything related to the adding of **Tron** object to `GameModel`
 
@@ -457,11 +492,11 @@ Let’s run a `sbt buildGame` to see what it says
 
 ![](compilation-error.png)
 
-Then let’s take a look at `GameView`
+We have introduced an error in the `GameView` so let’s take a look at it.
 
 ### 4. Game view
 
-As I mentioned previously scenes represent all the state the game will go through.
+As I mentioned previously scenes represent all the "windows" the game will go through with the interactions or actions needed to pass from one to the other.
 
 It can be represented as a simple graph
 
@@ -471,7 +506,7 @@ It can be represented as a simple graph
                 → *run*     → GameScene
 
 
-`GameView` is the view, what is shown, when the `GameScene` is active.
+`GameView` defines element that appear in the `GameScene`.
 
 First thing we notice is that it describes a list of things to draw on the screen.
 This is a list of `SceneNodes` which are the root constructors of scenes. 
@@ -518,4 +553,8 @@ Let’s compile again
 
 It should work 😄
 
-Start the server and try the game
+Go to build directory `cd target/indigoBuild`
+
+Start the server `http-server -c-1`
+
+and try the game.

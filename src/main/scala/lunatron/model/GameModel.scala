@@ -11,15 +11,16 @@ import lunatron.model.snakemodel.{CollisionCheckOutcome, Snake}
 import lunatron.scenes.{GameOverScene, GameView}
 import lunatron.Score
 import indigo.scenes.SceneEvent
+import lunatron.model.tronmodel.{CollisionCheckResult, Tron}
 
 final case class GameModel(
-  snake: Snake,
-  gameState: GameState,
-  gameMap: GameMap,
-  score: Int,
-  tickDelay: Seconds,
-  controlScheme: ControlScheme,
-  lastUpdated: Seconds
+    tron: Tron,
+    gameState: GameState,
+    gameMap: GameMap,
+    score: Int,
+    tickDelay: Seconds,
+    controlScheme: ControlScheme,
+    lastUpdated: Seconds
 ) {
 
   def update(gameTime: GameTime, dice: Dice, gridSquareSize: Int): GlobalEvent => Outcome[GameModel] = {
@@ -28,7 +29,7 @@ final case class GameModel(
 
     case FrameTick =>
       gameState match {
-        case s @ GameState.Running(_, _) =>
+        case s @ GameState.Running(_, _, _) =>
           GameModel.updateRunning(
             gameTime,
             dice,
@@ -37,7 +38,7 @@ final case class GameModel(
             gridSquareSize
           )(FrameTick)
 
-        case s @ GameState.Crashed(_, _, _, _) =>
+        case s @ GameState.Crashed(_, _, _, _, _) =>
           GameModel.updateCrashed(
             gameTime,
             this.copy(lastUpdated = gameTime.running),
@@ -47,10 +48,10 @@ final case class GameModel(
 
     case e =>
       gameState match {
-        case s @ GameState.Running(_, _) =>
+        case s @ GameState.Running(_, _, _) =>
           GameModel.updateRunning(gameTime, dice, this, s, gridSquareSize)(e)
 
-        case s @ GameState.Crashed(_, _, _, _) =>
+        case s @ GameState.Crashed(_, _, _, _, _) =>
           GameModel.updateCrashed(gameTime, this, s)(e)
       }
   }
@@ -63,10 +64,10 @@ object GameModel {
 
   def initialModel(gridSize: BoundingBox, controlScheme: ControlScheme): GameModel =
     GameModel(
-      snake = Snake(
+      tron = Tron(
         gridSize.center.x.toInt,
         gridSize.center.y.toInt - (gridSize.center.y / 2).toInt
-      ).grow.grow,
+      ),
       gameState = GameState.Running.start,
       gameMap = GameMap.genLevel(gridSize),
       score = 0,
@@ -76,17 +77,31 @@ object GameModel {
     )
 
   def updateRunning(
-    gameTime: GameTime,
-    dice: Dice,
-    state: GameModel,
-    runningDetails: GameState.Running,
-    gridSquareSize: Int
+      gameTime: GameTime,
+      dice: Dice,
+      state: GameModel,
+      runningDetails: GameState.Running,
+      gridSquareSize: Int
   ): GlobalEvent => Outcome[GameModel] = {
     case FrameTick =>
       val (updatedModel, collisionResult) =
-        state.snake.update(state.gameMap.gridSize, hitTest(state.gameMap, state.snake.givePath)) match {
-          case (s, outcome) =>
-            (state.copy(snake = s, gameState = state.gameState.updateNow(gameTime.running, state.snake.direction)), outcome)
+        state.tron.update(
+          state.gameMap.gridSize,
+          hitTest(state.gameMap, state.tron.snake.givePath),
+          hitTest(state.gameMap, state.tron.ekans.givePath)
+        ) match {
+          case (t, outcome) =>
+            (
+              state.copy(
+                tron = t,
+                gameState = state.gameState.updateNow(
+                  gameTime.running,
+                  state.tron.snake.direction,
+                  state.tron.ekans.direction
+                )
+              ),
+              outcome
+            )
         }
 
       updateBasedOnCollision(gameTime, dice, gridSquareSize, updatedModel, collisionResult)
@@ -94,7 +109,10 @@ object GameModel {
     case e: KeyboardEvent =>
       Outcome(
         state.copy(
-          snake = state.controlScheme.instructSnake(e, state.snake, runningDetails.lastSnakeDirection)
+          tron = Tron(
+            state.controlScheme.instructSnake(e, state.tron.snake, runningDetails.lastSnakeDirection),
+            state.controlScheme.instructSnake(e, state.tron.ekans, runningDetails.lastEkansDirection)
+          )
         )
       )
 
@@ -104,7 +122,7 @@ object GameModel {
 
   def hitTest(gameMap: GameMap, body: List[Vertex]): Vertex => CollisionCheckOutcome =
     given CanEqual[Option[MapElement], Option[MapElement]] = CanEqual.derived
-    pt => {
+    pt =>
       if (body.contains(pt)) CollisionCheckOutcome.Crashed(pt)
       else
         gameMap.fetchElementAt(pt) match {
@@ -117,27 +135,26 @@ object GameModel {
           case None =>
             CollisionCheckOutcome.NoCollision(pt)
         }
-    }
 
   def updateBasedOnCollision(
-    gameTime: GameTime,
-    dice: Dice,
-    gridSquareSize: Int,
-    gameModel: GameModel,
-    collisionResult: CollisionCheckOutcome
+      gameTime: GameTime,
+      dice: Dice,
+      gridSquareSize: Int,
+      gameModel: GameModel,
+      collisionResult: CollisionCheckResult
   ): Outcome[GameModel] =
     collisionResult match {
-      case CollisionCheckOutcome.Crashed(_) =>
+      case CollisionCheckResult.SnakeCrashed(_) =>
         Outcome(
           gameModel.copy(
             gameState = gameModel.gameState match {
-              case c @ GameState.Crashed(_, _, _, _) =>
+              case c @ GameState.Crashed(_, _, _, _, _) =>
                 c
 
-              case r @ GameState.Running(_, _) =>
-                r.crash(gameTime.running, gameModel.snake.length)
+              case r @ GameState.Running(_, _, _) =>
+                r.crash(gameTime.running, gameModel.tron.snake.length)
             },
-            tickDelay = gameModel.snake.length match {
+            tickDelay = gameModel.tron.snake.length match {
               case l if l < 5  => Seconds(0.1)
               case l if l < 10 => Seconds(0.05)
               case l if l < 25 => Seconds(0.025)
@@ -146,49 +163,97 @@ object GameModel {
           )
         ).addGlobalEvents(PlaySound(GameAssets.soundLose, Volume.Max))
 
-      case CollisionCheckOutcome.PickUp(pt) =>
+      case CollisionCheckResult.EkansCrashed(_) =>
         Outcome(
           gameModel.copy(
-            snake = gameModel.snake.grow,
+            gameState = gameModel.gameState match {
+              case c @ GameState.Crashed(_, _, _, _, _) =>
+                c
+
+              case r @ GameState.Running(_, _, _) =>
+                r.crash(gameTime.running, gameModel.tron.ekans.length)
+            },
+            tickDelay = gameModel.tron.ekans.length match {
+              case l if l < 5  => Seconds(0.1)
+              case l if l < 10 => Seconds(0.05)
+              case l if l < 25 => Seconds(0.025)
+              case _           => Seconds(0.015)
+            }
+          )
+        ).addGlobalEvents(PlaySound(GameAssets.soundLose, Volume.Max))
+
+      case CollisionCheckResult.SnakePickUp(collision) =>
+        Outcome(
+          gameModel.copy(
+            tron = gameModel.tron.growSnake,
             gameMap = gameModel.gameMap
-                               .removeApple(pt)
-                               .insertApple(
-                                 MapElement.Apple(
-                                   gameModel.gameMap
-                                            .findEmptySpace(dice, pt :: gameModel.snake.givePath)
-                                 )
-                               ),
+              .removeApple(collision.gridPoint)
+              .insertApple(
+                MapElement.Apple(
+                  gameModel.gameMap.findEmptySpace(dice, collision.gridPoint :: gameModel.tron.snake.givePath)
+                )
+              ),
             score = gameModel.score + ScoreIncrement
           )
         ).addGlobalEvents(
           PlaySound(GameAssets.soundPoint, Volume.Max),
-          Score.spawnEvent(GameView.gridPointToPoint(pt, gameModel.gameMap.gridSize, gridSquareSize))
+          Score.spawnEvent(GameView.gridPointToPoint(collision.gridPoint, gameModel.gameMap.gridSize, gridSquareSize))
         )
 
-      case CollisionCheckOutcome.NoCollision(_) =>
+      case CollisionCheckResult.EkansPickUp(collision) =>
+        Outcome(
+          gameModel.copy(
+            tron = gameModel.tron.growEkans,
+            gameMap = gameModel.gameMap
+              .removeApple(collision.gridPoint)
+              .insertApple(
+                MapElement.Apple(
+                  gameModel.gameMap.findEmptySpace(dice, collision.gridPoint :: gameModel.tron.ekans.givePath)
+                )
+              ),
+            score = gameModel.score + ScoreIncrement
+          )
+        ).addGlobalEvents(
+          PlaySound(GameAssets.soundPoint, Volume.Max),
+          Score.spawnEvent(GameView.gridPointToPoint(collision.gridPoint, gameModel.gameMap.gridSize, gridSquareSize))
+        )
+
+      case CollisionCheckResult.BothNoCollision(_, _) =>
         Outcome(gameModel)
     }
 
   def updateCrashed(
-    gameTime: GameTime,
-    state: GameModel,
-    crashDetails: GameState.Crashed
+      gameTime: GameTime,
+      state: GameModel,
+      crashDetails: GameState.Crashed
   ): GlobalEvent => Outcome[GameModel] = {
     case FrameTick if gameTime.running <= crashDetails.crashedAt + Seconds(0.75) =>
-      //Pause briefly on collision
+      // Pause briefly on collision
       Outcome(state)
 
-    case FrameTick if state.snake.length > 1 =>
+    case FrameTick if state.tron.snake.length > 1 =>
       Outcome(
         state.copy(
-          snake = state.snake.shrink,
-          gameState = state.gameState.updateNow(gameTime.running, state.gameState.lastSnakeDirection)
+          tron = state.tron.shrinkSnake,
+          gameState = state.gameState
+            .updateNow(gameTime.running, state.gameState.lastSnakeDirection, state.gameState.lastEkansDirection)
         )
       )
 
-    case FrameTick if state.snake.length == 1 =>
-      Outcome(state)
-        .addGlobalEvents(SceneEvent.JumpTo(GameOverScene.name))
+    case FrameTick if state.tron.ekans.length > 1 =>
+      Outcome(
+        state.copy(
+          tron = state.tron.shrinkEkans,
+          gameState = state.gameState
+            .updateNow(gameTime.running, state.gameState.lastSnakeDirection, state.gameState.lastEkansDirection)
+        )
+      )
+
+    case FrameTick if state.tron.snake.length == 1 =>
+      Outcome(state).addGlobalEvents(SceneEvent.JumpTo(GameOverScene.name))
+
+    case FrameTick if state.tron.ekans.length == 1 =>
+      Outcome(state).addGlobalEvents(SceneEvent.JumpTo(GameOverScene.name))
 
     case _ =>
       Outcome(state)

@@ -9,42 +9,51 @@ import lunatron.model.{GameMap, GameModel}
 
 object GameView {
 
-  def update(viewConfig: ViewConfig, model: GameModel, walls: Group, staticAssets: StaticAssets): Outcome[SceneUpdateFragment] =
+  def update(
+      viewConfig: ViewConfig,
+      model: GameModel,
+      walls: Group,
+      staticAssets: StaticAssets
+  ): Outcome[SceneUpdateFragment] =
     Outcome(
-      SceneUpdateFragment.empty
-                         .addLayer(
-                           Layer(
-                             BindingKey("game"),
-                             gameLayer(
-                               viewConfig,
-                               model,
-                               staticAssets,
-                               walls
-                             ):_*
-                           )
-                         )
+      SceneUpdateFragment.empty.addLayer(
+        Layer(
+          BindingKey("game"),
+          gameLayer(
+            viewConfig,
+            model,
+            staticAssets,
+            walls
+          ): _*
+        )
+      )
     )
 
   def gameLayer(
-    viewConfig: ViewConfig,
-    currentState: GameModel,
-    staticAssets: StaticAssets,
-    walls: Group
+      viewConfig: ViewConfig,
+      currentState: GameModel,
+      staticAssets: StaticAssets,
+      walls: Group
   ): List[SceneNode] =
     walls ::
       drawApple(viewConfig, currentState.gameMap, staticAssets) ++
-        drawSnake(viewConfig, currentState, staticAssets.snake) ++
-        drawScore(viewConfig, currentState.score)
+      drawSnake(viewConfig, currentState, staticAssets.snake) ++
+      drawEkans(viewConfig, currentState, staticAssets.snake) ++
+      drawScore(viewConfig, currentState.score)
 
   def drawApple(viewConfig: ViewConfig, gameMap: GameMap, staticAssets: StaticAssets): List[Graphic[_]] =
     gameMap.findApples.map { a =>
-      staticAssets.apple
-                  .moveTo(gridPointToPoint(a.gridPoint, gameMap.gridSize, viewConfig.gridSquareSize))
+      staticAssets.apple.moveTo(gridPointToPoint(a.gridPoint, gameMap.gridSize, viewConfig.gridSquareSize))
     }
 
   def drawSnake(viewConfig: ViewConfig, currentState: GameModel, snakeAsset: Graphic[_]): List[Graphic[_]] =
-    currentState.snake.givePath.map { pt =>
+    currentState.tron.snake.givePath.map { pt =>
       snakeAsset.moveTo(gridPointToPoint(pt, currentState.gameMap.gridSize, viewConfig.gridSquareSize))
+    }
+
+  def drawEkans(viewConfig: ViewConfig, currentState: GameModel, ekansAsset: Graphic[_]): List[Graphic[_]] =
+    currentState.tron.ekans.givePath.map { pt =>
+      ekansAsset.moveTo(gridPointToPoint(pt, currentState.gameMap.gridSize, viewConfig.gridSquareSize))
     }
 
   def drawScore(viewConfig: ViewConfig, score: Int): List[SceneNode] =
