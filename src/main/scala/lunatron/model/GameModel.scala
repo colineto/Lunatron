@@ -153,7 +153,8 @@ object GameModel {
               case l if l < 10 => Seconds(0.05)
               case l if l < 25 => Seconds(0.025)
               case _           => Seconds(0.015)
-            }
+            },
+            scores = gameModel.scores.resetSnake
           )
         ).addGlobalEvents(PlaySound(GameAssets.soundLose, Volume.Max))
 
@@ -172,7 +173,8 @@ object GameModel {
               case l if l < 10 => Seconds(0.05)
               case l if l < 25 => Seconds(0.025)
               case _           => Seconds(0.015)
-            }
+            },
+            scores = gameModel.scores.resetEkans
           )
         ).addGlobalEvents(PlaySound(GameAssets.soundLose, Volume.Max))
 

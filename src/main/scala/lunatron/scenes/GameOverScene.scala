@@ -59,7 +59,12 @@ object GameOverScene extends Scene[StartupData, GameModel, ViewModel] {
         Layer(
           BindingKey("ui"),
           Text(
-            "Game Over!",
+            pointsScored match {
+              case Scores(0, 0)     => "Game Over!"
+              case Scores(snake, 0) => "Snake won !"
+              case Scores(0, ekans) => "Ekans won !"
+              case _                => "Oupsi you both won but this is not possible ..."
+            },
             horizontalCenter,
             verticalMiddle - 40,
             1,
