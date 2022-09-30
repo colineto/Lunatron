@@ -1,6 +1,6 @@
 ## Some colours
 
-Go back to `GameView` in the `gameLayer` function
+Go to `GameView` in the `gameLayer` function
 
 Here we previously added
 
@@ -22,11 +22,26 @@ final case class StaticAssets(
 )
 ```
 
-We can add ekans here, but I don’t know if you noticed that the whole game is in black and white and that’s also right for all the existing assets. Which means that if we want colour we will need to create our own assets or at least modify these ones.
+We can add ekans here 
 
-Let’s trick a bit here. A `Bitmap` is in fact just an asset but instead we could use an `ImageEffect` which is a Bitmap but with more functionalities.
+```scala
+final case class StaticAssets(
+    apple: Graphic[Material.Bitmap],
+    snake: Graphic[Material.Bitmap],
+    ekans: Graphic[Material.Bitmap],
+    wall: Graphic[Material.Bitmap]
+)
+```
 
-Update all the assets from `Bitmap` to `ImageEffect` and add Ekans
+I don’t know if you noticed but the whole game is in black and white and that’s also right for all the existing assets. Which means that if we want colour we will need to create our own assets or at least modify these ones.
+
+Let’s trick a bit here. 
+
+A `Bitmap` is a simple asset and there's not a lot we can do with it.
+
+But instead we could use an `ImageEffect` which is an implementation of `Bitmap` but with more functionalities.
+
+Update all the assets from `Bitmap` to `ImageEffect`.
 
 ```scala
 final case class StaticAssets(
@@ -37,7 +52,7 @@ final case class StaticAssets(
 )
 ```
 
-Now update `createStartupData` function
+Now update `createStartupData` function with ekans asset
 
 ```scala
 def createStartupData(viewConfig: ViewConfig): StartupData = {
@@ -55,38 +70,40 @@ def createStartupData(viewConfig: ViewConfig): StartupData = {
   }
 ```
 
-Go into `GameAssets`
+As you can see we need a specific asset for ekans, so go into `GameAssets`
 
-Update `snakeMaterial` and existing functions to `ImageEffects`
+First, update `snakeMaterial` and existing functions with `ImageEffects` instead of `Bitmap`
 
 ```scala
 val snakeMaterial: Material.ImageEffects = Material.ImageEffects(snakeTexture)
 
 def apple(blockSize: Int): Graphic[Material.ImageEffects] =
-    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial).withCrop(blockSize, 0, blockSize, blockSize)
+  Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial).withCrop(blockSize, 0, blockSize, blockSize)
 
-  def snake(blockSize: Int): Graphic[Material.ImageEffects] =
-    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial)
+def snake(blockSize: Int): Graphic[Material.ImageEffects] =
+  Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial)
 
-  def wall(blockSize: Int): Graphic[Material.ImageEffects] =
-    Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial).withCrop(blockSize * 2, 0, blockSize, blockSize)
+def wall(blockSize: Int): Graphic[Material.ImageEffects] =
+  Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial).withCrop(blockSize * 2, 0, blockSize, blockSize)
 ```
 
-Use ImageEffects `withTint` function on the `snakeMaterial`, which will add a colour to a basic png asset, in the `snake` function
+And here is the trick, in `ImageEffects` there's a `withTint` function which will add a colour to a basic png asset.
+
+Apply that to the `snakeMaterial` of Snake with colour Blue.
 
 ```scala
 def snake(blockSize: Int): Graphic[Material.ImageEffects] =
     Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial.withTint(RGBA.Blue))
 ```
 
-Now you can add ekans one
+And create ekans function just like snake but with colour Red.
 
 ```scala
   def ekans(blockSize: Int): Graphic[Material.ImageEffects] =
     Graphic(0, 0, blockSize, blockSize, 2, GameAssets.snakeMaterial.withTint(RGBA.Red))
 ```
 
-Finally update **drawEkans** in `GameView`
+Finally update `drawEkans` call in `GameView`
 
 ```scala
 drawEkans(viewConfig, currentState, staticAssets.ekans) ++

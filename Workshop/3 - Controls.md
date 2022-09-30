@@ -113,7 +113,7 @@ final case class GameModel(
 ) {
 ```
 
-and update `initialModel` definition
+and update `initialModel` definition with also removing `ControlScheme`
 
 ```scala
 def initialModel(gridSize: BoundingBox): GameModel =
@@ -130,7 +130,7 @@ def initialModel(gridSize: BoundingBox): GameModel =
     )
 ```
 
-This function is called in `LunatronGame` update the calls
+This function is called in `LunatronGame` update the calls: lines 55 and 64
 
 ```scala
 def initialModel(startupData: StartupData): Outcome[GameModel] =
@@ -143,7 +143,9 @@ def updateModel(context: FrameContext[StartupData], model: GameModel): GlobalEve
     Outcome(GameModel.initialModel(context.startUpData.viewConfig.gridSize))
 ```
 
-Now add `ControlScheme` to `Snake`
+Now the big part.
+
+Add `ControlScheme` to `Snake`
 
 ```scala
 final case class Snake(
@@ -155,20 +157,20 @@ final case class Snake(
 ) {
 ```
 
-Update `Snake` `apply` functions
+Update `Snake` `apply` functions with this new parameter
 
 ```scala
-def apply(start: Vertex, controlScheme: ControlScheme): Snake =
+  def apply(start: Vertex, controlScheme: ControlScheme): Snake =
     Snake(start, Nil, SnakeDirection.Up, SnakeStatus.Alive, controlScheme)
 
   def apply(x: Int, y: Int, controlScheme: ControlScheme): Snake =
     Snake(Vertex(x.toDouble, y.toDouble), Nil, SnakeDirection.Up, SnakeStatus.Alive, controlScheme)
 ```
 
-And `Snake` `moveToPosition` function
+Also update `Snake` `moveToPosition` function with the right number of parameters
 
 ```scala
-def moveToPosition(snake: Snake, snakePoint: Vertex): Snake =
+  def moveToPosition(snake: Snake, snakePoint: Vertex): Snake =
     snake match {
       case Snake(_, Nil, d, s, cs) =>
         Snake(snakePoint, Nil, d, s, cs)
@@ -178,29 +180,17 @@ def moveToPosition(snake: Snake, snakePoint: Vertex): Snake =
     }
 ```
 
-Then update `Tron` `apply` function and give **directed keys** to snake and **WASD directed keys** to ekans
+Now go to `Tron` model
+
+In the apply methods we need to add the new parameter `ControlScheme` to `Snake` implementations.
+
+Update `Tron` `apply` methods by giving **directed keys** to snake and **WASD directed keys** to ekans
 
 ```scala
-def apply(x: Int, y: Int): Tron =
-    Tron(
-			Snake(
-        Vertex(x.toDouble, y.toDouble), 
-        Nil, 
-        SnakeDirection.Up, 
-        SnakeStatus.Alive, 
-        ControlScheme.directedKeys
-      ),
-      Snake(
-        Vertex(x.toDouble, y.toDouble),
-        Nil,
-        SnakeDirection.Down,
-        SnakeStatus.Alive,
-        ControlScheme.wasdDirectedKeys
-      )
-)
+    ...
 ```
 
-Move `instructSnake` into `Snake` and rename it `instruct`, snake direction and control scheme are now induced by snake.
+Move `instructSnake` from `ControlScheme` into `Snake` object and rename it `instruct`.
 
 ```scala
 def instruct(keyboardEvent: KeyboardEvent, snake: Snake): Snake =
@@ -245,14 +235,16 @@ def instruct(keyboardEvent: KeyboardEvent, snake: Snake): Snake =
 }
 ```
 
-Add `instruct` in `Snake` trait
+Add `instruct` in `Snake` case class too
 
 ```scala
 def instruct(keyboardEvent: KeyboardEvent): Snake =
     Snake.instruct(keyboardEvent, this)
 ```
 
-Now we can update **keyboard event** case in `GameModel`
+Snake direction and controls are now induced by snake.
+
+Now we can update **keyboard event** case in `updateRunning` in `GameModel`
 
 ```scala
 case e: KeyboardEvent =>
@@ -263,18 +255,23 @@ case e: KeyboardEvent =>
 
 Let’s compile !
 
-You’ll probably have an error with `ControlScene`
-If you take a look at the game and at this particular scene
+---
 
-![](controls.png)
+Ahhh another error !! :D
 
-You’ll see that it does not really make sense in our new Tron game or we would have to duplicate it per player with wasd keys too…
+You probably have an error with `ControlScene`
+
+You can go on your actual running game in the browser and take a look at the 2nd scene: the `ControlScene`
+
+![](img/controls.png)
+
+You can see that it does not really make sense in our new Tron game or we would have to duplicate it per player with wasd keys too…
 
 What we could do instead is give a choice between Snake and Ekans and the set of keys the player want to use.
 
 But that seems to be a nice to have.
 
-So for now we will just update it to make it only descriptive on how to controls the snakes.
+So for now we will just update it to make it only descriptive on how to control the snakes.
 
 ## Update Controls Scene
 
@@ -289,8 +286,8 @@ type SceneModel = Unit
 
 /*** and ***/
 
-val modelLens: Lens[GameModel, Unit] =
-    Lens.Unit
+val modelLens: Lens[GameModel, SceneModel] =
+    Lens.unit
 ```
 
 Let’s take a look at the `present` function. It has a list of `SceneNodes` that build the actual scene.
@@ -338,7 +335,7 @@ def updateModel(
     _ => Outcome(sceneViewModel)
 ```
 
-Go back to `present` and replace `ControlScheme` type with `SceneModel` .
+Now in the `present` function, replace `ControlScheme` type with `SceneModel` .
 
 ```scala
 def present(
@@ -404,10 +401,8 @@ List(
 
 You can compile again and see what it looks like
 
-Now you have a Tron ish game 😄
-
-You can play with another person to try it !
+To try it you'll need an enemy cause now it just became a two player game !
 
 Next step is fun
 
-Let’s give them some colours ! 
+Let’s give them some colours 🌈

@@ -1,18 +1,26 @@
 ## Scores
 
-Score is part of `GameModel` class and represented with an Int.
+Right now whoever of snake or ekans eat an apple the score is incremented and doesn't belong to any player.
 
-We could make it part of snake instead like we did for controlScheme but it makes less sense in that case.
+In fact `Score` is part of `GameModel` class and represented with an `Int`.
+
+In order to split it between snake one and ekans one, we could make it part of `Snake` model like we did for `controlScheme`. But it makes less sense in that case.
 
 For that one we could try to model it differently and keep it part of `GameModel`.
 
-In fact scores appear in two places in the code, during the game and when game over.
+In fact scores appear in two places in the code
 
-For the game over part whatever model we chose it will be simple to show two different scores.
+When game over
 
-And during the game the score appears above the apple when picked and on the bottom right corner of the screen and in both cases this modelling should allow us to duplicate it easily.
+![](img/gameover-screen.png)
 
-Start by creating a `Score` model in `tronmodel` that defined both snake and ekans ones.
+And during the game, above the apple when picked, which will not change at all. And in the bottom right corner of the screen.
+
+![](img/game-scores.png)
+
+In both cases this modelling should allow us to duplicate it easily.
+
+Start by creating a `Score` model in `tronmodel` that define both snake and ekans ones.
 
 ```scala
 package lunatron.model.tronmodel
@@ -23,7 +31,7 @@ case class Scores(
 )
 ```
 
-Use it in `GameModel`
+Use it in `GameModel` instead of the Int
 
 ```scala
 final case class GameModel(
@@ -36,9 +44,7 @@ final case class GameModel(
 )
 ```
 
-Now update usages
-
-in `initialModel` initialise both of them to 0
+Now update its initialisation in `initialModel` with both of them to 0
 
 ```scala
 def initialModel(gridSize: BoundingBox): GameModel =
@@ -55,19 +61,21 @@ def initialModel(gridSize: BoundingBox): GameModel =
 	)
 ```
 
-in `updateBasedOnCollision` in `PickUp` cases
+In `updateBasedOnCollision` if snake `pickUp` we want to increase snake points and if ekans `pickUp` then we want to increase ekans points.
 
 ```scala
-scores = gameModel.scores.copy(snake = gameModel.scores.snake + ScoreIncrement)
-
-/*** and ***/
-
-scores = gameModel.scores.copy(ekans = gameModel.scores.ekans + ScoreIncrement)
+???
 ```
 
-Final scores appears in `GameOverScene`
+You can model a score increment function in `Scores` if you have time, like we did for `growSnake`.
 
-As mentioned above we just want here to show both scores.
+This will do it for the modeling.
+
+Now we need to update the scenes.
+
+Final scores appears in `GameOverScene`, open it.
+
+As mentioned above we want to show both scores here.
 
 Let’s start with modifying the type of `SceneModel`
 
@@ -82,7 +90,7 @@ val modelLens: Lens[GameModel, SceneModel] =
     Lens.readOnly(_.scores)
 ```
 
-Then `updateModel`
+In `updateModel` update the parameter and the outcome type
 
 ```scala
 def updateModel(context: FrameContext[StartupData], pointsScored: Scores): GlobalEvent => Outcome[SceneModel] = {
@@ -94,18 +102,18 @@ def updateModel(context: FrameContext[StartupData], pointsScored: Scores): Globa
   }
 ```
 
-And `updateViewModel`
+Same for `updateViewModel`
 
 ```scala
 def updateViewModel(
       context: FrameContext[StartupData],
       pointsScored: Scores,
-      sceneViewModel: Unit
+      sceneViewModel: SceneViewModel
   ): GlobalEvent => Outcome[SceneViewModel] =
     _ => Outcome(sceneViewModel)
 ```
 
-And just the signature of `present`
+And same for `present`
 
 ```scala
 def present(
@@ -157,14 +165,16 @@ SceneUpdateFragment.empty.addLayer(
       )
 ```
 
-Scores appears at the corner during the game which corresponds to `GameView`
+Score also appears in the bottom right corner during the game which corresponds to `GameView`
 
-Let’s start with using snake points as a starter value in `gameLayer` and compile it.
+There's a dedicated `drawScore` function.
+
+What we want to do here is to show 
+* in bottom right corner Snake’s points in Blue 
+* in bottom left corner Ekans’ points in Red.
 
 ```scala
-drawScore(viewConfig, currentState.scores.snake)
+???
 ```
-
-What we want to do here is to show on right corner Snake’s points in Red and on the left corner Ekans’ points in Blue.
 
 I let you implement that part on your own !

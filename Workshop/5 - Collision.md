@@ -1,40 +1,47 @@
-## Collision rule
+## Collision rules
 
-Go in `GameModel`
+First let's remember what are the collision rules
 
-We already have all the cases handled in `updateBasedOnCollision`
+The rules that applies to Snake game and that still apply to Tron game:
 
-We need to know when a snake just hit the body of the other one
+* if it crosses a wall it dies
+* if it crosses itself it dies
+* if it eats an apple it grows
 
-This will be handled in `hitTest`
+The rule we need to add to make it a Tron:
 
-In `updateRunning` we have two `hitTests`, one for snake and one for ekans
+* if it crosses the other snake it dies
 
-In both of them we will need to add information about the body of the other snake so we can also raise a `Crashed` state when they hit each other.
+Let's implement that last rule
 
-Add **otherBody** to the signature
+Go in `GameModel`. In here we have 2 places where collision is used.
+
+* `updateBasedOnCollision`
+* `hitTest`
+
+In `updateBasedOnCollision` we handle `SnakeCrashed` and `EkansCrashed` cases already, so it seems that's not the place to introduce another type of crash.
+
+In `hitTest` we take a snake body and compare it to the actual position point. To see if that snake body just met an apple or a wall. This seems a much better place to test if that snake body did hurt another snake body :)
+
+Add an 'otherBody' to `hitTest`
 
 ```scala
 def hitTest(gameMap: GameMap, body: List[Vertex], otherBody: List[Vertex]): Vertex => CollisionCheckOutcome =
 ```
 
-The if check that it hit himself
+Then check if it hit the other body
 
 ```scala
-if (body.contains(pt)) CollisionCheckOutcome.Crashed(pt)
+???
 ```
 
-We can do the same to test it hit the otherBody
-
-```scala
-else if (otherBody.contains(pt)) CollisionCheckOutcome.Crashed(pt)
-```
-
-Now you can add the other bodies in `updateRunning`
+Now add the 'otherBody' parameter in `updateRunning`, `hitTest` calls
 
 ```scala
 hitTest(state.gameMap, state.tron.snake.givePath, state.tron.ekans.givePath),
 hitTest(state.gameMap, state.tron.ekans.givePath, state.tron.snake.givePath)
 ```
 
-Try it !
+If you too, you noticed that this could definitely be improved with, keep it in mind for later !
+
+Now Try it :)
