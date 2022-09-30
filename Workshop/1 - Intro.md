@@ -33,7 +33,7 @@ http-server -c-1
 
 Check [`http://127.0.0.1:8080/`](http://127.0.0.1:8080/)
 
-![](game-screen.png)
+![](img/game-screen.png)
 
 # Tron upgrade
 
