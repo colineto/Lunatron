@@ -490,7 +490,7 @@ At that point it seems that we have modified everything related to the adding of
 
 Let’s run a `sbt buildGame` to see what it says
 
-![](compilation-error.png)
+![](img/compilation-error.png)
 
 We have introduced an error in the `GameView` so let’s take a look at it.
 
