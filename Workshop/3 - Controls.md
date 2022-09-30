@@ -263,7 +263,7 @@ You probably have an error with `ControlScene`
 
 You can go on your actual running game in the browser and take a look at the 2nd scene: the `ControlScene`
 
-![](controls.png)
+![](img/controls.png)
 
 You can see that it does not really make sense in our new Tron game or we would have to duplicate it per player with wasd keys too…
 
